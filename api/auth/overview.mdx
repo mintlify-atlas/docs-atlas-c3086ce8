@@ -1,0 +1,77 @@
+---
+title: 'Authentication overview for VEN 911 API'
+description: 'Authenticate with Portal VEN 911 by posting credentials to get a JWT token, then include it as a Bearer token on all protected API requests.'
+---
+
+The VEN 911 API uses JSON Web Tokens (JWT) for authentication. You obtain a token by sending your email and password to the login endpoint, then attach that token to every subsequent request using the `Authorization` header.
+
+## How authentication works
+
+<Steps>
+  <Step title="Send your credentials">
+    POST your `email` and `password` to `/api/auth/login`. No token is required for this request.
+  </Step>
+  <Step title="Receive a JWT">
+    On success, the API returns a `token` (JWT) along with your user profile. Store the token — you will need it for all protected endpoints.
+  </Step>
+  <Step title="Attach the token to requests">
+    Include the token in the `Authorization` header of every protected request:
+
+    ```
+    Authorization: Bearer <token>
+    ```
+  </Step>
+</Steps>
+
+## Token lifetime
+
+Tokens expire after **1 day**. When a token expires, the API returns a `401 Unauthorized` response. Log in again to obtain a new token.
+
+<Info>
+  The client stores the token in `localStorage` under the key `ven911_token`.
+</Info>
+
+## Roles and access
+
+Only users with one of the following roles can obtain a token. Accounts with any other role receive a `403 Forbidden` response.
+
+| Role | Description |
+|---|---|
+| `Coordinador` | Coordination team access |
+| `Prensa` | Press team access |
+| `Gestión Humana` | Human resources team access |
+| `Administrador` | Full administrative access |
+
+## Example: full authentication flow
+
+The example below shows how to log in and then use the returned token to call a protected endpoint.
+
+```bash
+# Step 1: log in and capture the token
+TOKEN=$(curl --silent --request POST \
+  --url https://your-domain.com/api/auth/login \
+  --header 'Content-Type: application/json' \
+  --data '{"email": "user@example.com", "password": "your-password"}' \
+  | jq -r '.token')
+
+# Step 2: use the token on a protected endpoint
+curl --request GET \
+  --url https://your-domain.com/api/protected-resource \
+  --header "Authorization: Bearer $TOKEN"
+```
+
+## What happens when the token expires
+
+When a token expires or is invalid, the API returns:
+
+```json
+HTTP/1.1 401 Unauthorized
+```
+
+Log in again via `POST /api/auth/login` to get a fresh token.
+
+## Next steps
+
+<Card title="POST /api/auth/login" icon="key" href="/api/auth/login">
+  See the full reference for the login endpoint, including request parameters, response fields, and error codes.
+</Card>

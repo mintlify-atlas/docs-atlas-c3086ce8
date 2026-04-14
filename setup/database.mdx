@@ -1,0 +1,167 @@
+---
+title: 'Setting up the NeonDB database'
+description: 'Portal VEN 911 uses NeonDB serverless PostgreSQL. Set up your database, run the schema migrations, and connect using the DATABASE_URL connection string.'
+---
+
+Portal VEN 911 uses [NeonDB](https://neon.tech), a serverless PostgreSQL provider that scales to zero when idle. You get a real PostgreSQL 16 database on a free plan, which is sufficient for most portal deployments. The application connects using the `@neondatabase/serverless` driver, which works in both Node.js and edge runtimes without a persistent TCP connection.
+
+## Create a NeonDB project
+
+<Steps>
+  <Step title="Sign up at neon.tech">
+    Go to [neon.tech](https://neon.tech) and create a free account. No credit card is required for the free tier.
+  </Step>
+  <Step title="Create a new project">
+    Click **New Project** and give it a name (e.g. `portal911`). Choose the AWS region closest to your deployment target — for Vercel deployments in the US, **US East (N. Virginia)** is a good default.
+  </Step>
+  <Step title="Copy your connection string">
+    After the project is created, the dashboard shows a **Connection Details** panel. Select **Pooled connection** and copy the connection string. It looks like:
+
+    ```
+    postgresql://portal911_owner:AbCdEfGh123@ep-example-name-123456.us-east-1.aws.neon.tech/portal911?sslmode=require
+    ```
+
+    Paste this value as `DATABASE_URL` in your `.env.local` file (see [Environment variables and configuration](/setup/environment)).
+  </Step>
+</Steps>
+
+<Note>
+  NeonDB provides both a direct connection string and a pooled connection string. Use the **pooled** string for the portal — serverless and edge functions open a new connection on every request, and pooling prevents exhausting the connection limit.
+</Note>
+
+## Create the schema
+
+Portal VEN 911 does not include an automated migration runner. Run the SQL below once against your NeonDB database to create all required tables. You can execute it from the **SQL Editor** tab in the NeonDB dashboard or using any PostgreSQL client connected with your `DATABASE_URL`.
+
+```sql schema.sql
+-- Departments must be created before users and reports
+-- because both tables reference it.
+CREATE TABLE departments (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL
+);
+
+-- Users with role-based access control
+CREATE TABLE users (
+  id              SERIAL PRIMARY KEY,
+  name            VARCHAR   NOT NULL,
+  email           VARCHAR   UNIQUE NOT NULL,
+  password_hash   VARCHAR   NOT NULL,
+  role            VARCHAR   NOT NULL CHECK (role IN ('Coordinador', 'Prensa', 'Gestión Humana', 'Administrador')),
+  department_id   INTEGER   REFERENCES departments(id),
+  active          BOOLEAN   DEFAULT true,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- News articles published on the landing page
+CREATE TABLE news (
+  id           SERIAL PRIMARY KEY,
+  title        VARCHAR   NOT NULL,
+  content      TEXT      NOT NULL,
+  image_url    VARCHAR,
+  author_id    INTEGER   REFERENCES users(id),
+  visible      BOOLEAN   DEFAULT true,
+  published_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Institutional format documents stored in Google Drive
+CREATE TABLE formats (
+  id            SERIAL PRIMARY KEY,
+  name          VARCHAR   NOT NULL,
+  description   TEXT,
+  file_drive_id VARCHAR   NOT NULL,
+  file_name     VARCHAR,
+  version       INTEGER   DEFAULT 1,
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Biweekly coordinator reports stored in Google Drive
+CREATE TABLE reports (
+  id             SERIAL PRIMARY KEY,
+  department_id  INTEGER   REFERENCES departments(id),
+  user_id        INTEGER   REFERENCES users(id),
+  period_start   DATE      NOT NULL,
+  period_end     DATE      NOT NULL,
+  quincena       INTEGER   NOT NULL CHECK (quincena IN (1, 2)),
+  file_name      VARCHAR   NOT NULL,
+  file_drive_id  VARCHAR   NOT NULL,
+  file_mime_type VARCHAR,
+  file_size      INTEGER,
+  status         VARCHAR   DEFAULT 'pending',
+  reviewed_by    INTEGER   REFERENCES users(id),
+  review_comment TEXT,
+  reviewed_at    TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+<Tip>
+  Paste the entire block into the NeonDB SQL Editor and click **Run**. All five tables will be created in a single transaction. If you need to start fresh, drop the tables in reverse order (reports → formats → news → users → departments) to respect foreign key constraints.
+</Tip>
+
+## Seed initial data
+
+### Add at least one department
+
+Every user belongs to a department. Insert at least one before creating any users.
+
+```sql
+INSERT INTO departments (name) VALUES
+  ('Dirección General'),
+  ('Operaciones'),
+  ('Comunicaciones'),
+  ('Gestión Humana');
+```
+
+Adjust department names to match your organization's structure.
+
+### Create the first administrator user
+
+There is no public registration page. Create the initial `Administrador` user directly in the database. Use bcrypt to hash the password before inserting — you can generate a hash with the following Node.js one-liner:
+
+```bash
+node -e "const b = require('bcrypt'); b.hash('YourStrongPassword123', 10).then(h => console.log(h))"
+```
+
+Then insert the user with the printed hash:
+
+```sql
+INSERT INTO users (name, email, password_hash, role, department_id, active)
+VALUES (
+  'Admin VEN 911',
+  'admin@ven911.gob.ve',
+  '$2b$10$your-bcrypt-hash-here',
+  'Administrador',
+  1,   -- replace with the actual department id
+  true
+);
+```
+
+<Warning>
+  Choose a strong password for the administrator account. The application hashes passwords with bcrypt (10 rounds), but a weak plain-text password is still the easiest attack vector.
+</Warning>
+
+## User roles
+
+The `role` column is constrained to four values. Each role controls what a user can access inside the portal.
+
+| Role | Description |
+| --- | --- |
+| `Coordinador` | Can upload and view their own biweekly reports |
+| `Prensa` | Can publish and manage news articles |
+| `Gestión Humana` | Can review reports and manage format documents |
+| `Administrador` | Full access — manages users, departments, formats, reports, and news |
+
+## Development utilities
+
+### Password reset script
+
+The repository includes `scripts/reset.js`, which resets every active user's password to `123456` using a single `UPDATE` query.
+
+```bash
+node scripts/reset.js
+```
+
+<Warning>
+  Run `scripts/reset.js` only in development. It sets all active user passwords to the hardcoded value `123456`, which is not safe for production use. Never run this script against a database that contains real user accounts.
+</Warning>

@@ -1,0 +1,98 @@
+---
+title: "Managing users and accounts"
+description: "Administrators can create, edit, and deactivate VEN 911 user accounts and assign roles through the Usuarios module in the admin dashboard."
+---
+
+The **Usuarios** module gives administrators full control over who can access Portal VEN 911 and what they can do. Every account in the system is created here — users cannot self-register. Administrators set each user's role, which determines every module and action available to that person across the portal.
+
+Navigate to **Usuarios** in the sidebar at `/dashboard/usuarios`.
+
+<Note>
+  Only users with the **Administrador** role can access the Usuarios module. Users cannot change their own role — all role assignments are made exclusively by an administrator.
+</Note>
+
+---
+
+## User fields
+
+Each account has the following fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Nombre Completo** | Yes | The user's display name, shown in the dashboard welcome header and the reviewer column of submitted reports |
+| **Correo Electrónico** | Yes | Used as the login identifier. Must be unique across all accounts — duplicate emails are rejected with the error: _"Email ya existe"_ |
+| **Contraseña** | Yes (on create) | A temporary password set by the administrator. The user can log in immediately with this password. Passwords are hashed with bcrypt (cost factor 10) before storage — the plain-text value is never saved |
+| **Rol** | Yes | One of four values: **Coordinador**, **Prensa**, **Gestión Humana**, or **Administrador** |
+| **Departamento** | No | Associates the user with an operational department. Used to group coordinator reports by department in the review table |
+
+---
+
+## Creating a user
+
+<Steps>
+  <Step title="Open the creation form">
+    Click **Nuevo Usuario** at the top right of the Usuarios page. A modal dialog opens.
+  </Step>
+  <Step title="Enter the user's details">
+    Fill in **Nombre Completo**, **Correo Electrónico**, and **Contraseña**. All three are required for new accounts.
+  </Step>
+  <Step title="Assign a role">
+    Select one role from the **Rol** dropdown: Coordinador, Prensa, Gestión Humana, or Administrador. The role determines every permission the user has in the system.
+  </Step>
+  <Step title="Assign a department (optional)">
+    If the user is a coordinator, selecting their department links their reports to that department in the review table.
+  </Step>
+  <Step title="Create the account">
+    Click **Crear Usuario**. If the email is already in use, the form shows: _"Email ya existe"_. Otherwise, the modal closes and the new user appears in the table. The user can log in immediately with the credentials you set.
+  </Step>
+</Steps>
+
+---
+
+## Editing a user
+
+Click **Editar** on any row in the user table to open the same modal pre-filled with the user's current data. You can update the name, email, role, and department. Leave the **Contraseña** field blank to keep the existing password unchanged — entering a new value replaces it.
+
+<Tip>
+  Use the edit action to reassign a coordinator to a different department, or to promote a user to Administrador when staff responsibilities change.
+</Tip>
+
+---
+
+## Deactivating a user
+
+The `active` field on a user account controls login access. Setting `active = false` prevents the user from logging in without deleting their record or history. This is useful for staff who leave temporarily or whose access should be suspended.
+
+<Info>
+  Deactivation is managed at the database level. The current dashboard UI does not expose a toggle for `active` directly — contact a database administrator or use the API to set this field.
+</Info>
+
+---
+
+## Deleting a user
+
+Click **Eliminar** on any row in the user table. A confirmation dialog shows: _"¿Eliminar a [name]? Esta acción no se puede deshacer."_ Confirming sends a `DELETE /api/users/{id}` request.
+
+<Warning>
+  Deleting a user is permanent. Their account, login credentials, and department associations are removed from the database. This action cannot be undone.
+</Warning>
+
+---
+
+## User list columns
+
+The Usuarios table displays the following columns for every account:
+
+| Column | Description |
+|--------|-------------|
+| **Nombre** | Avatar initial and full name |
+| **Email** | Login email address |
+| **Rol** | Role badge (Coordinador, Prensa, Gestión Humana, or Administrador) |
+| **Departamento** | Associated department name, or _"Sin asignar"_ if none |
+| **Acciones** | **Editar** and **Eliminar** links |
+
+---
+
+## Bitacora (activity log)
+
+Administrators also have access to the **Bitacora** module at `/dashboard/bitacora`. This page records system activity and is visible only to the Administrador role. It provides an audit trail of actions taken within the portal.

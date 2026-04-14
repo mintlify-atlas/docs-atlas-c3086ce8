@@ -1,0 +1,52 @@
+---
+title: "What is VEN 911?"
+description: "Portal VEN 911 is the internal operations platform for Venezuela's national 911 emergency response system, built for coordinating teams across the country."
+---
+
+Portal VEN 911 is the official internal management system for the **Comando Nacional VEN 911** — Venezuela's integrated national emergency response network (Sistema Integrado de Emergencias), which coordinates three operational pillars: **Seguridad Ciudadana** (citizen security), **Salud** (health and medical response), and **Gestión de Riesgos** (disaster and risk management). The portal gives each staff role a purpose-built workspace to manage their day-to-day operations without overlap or confusion.
+
+## Two main surfaces
+
+The system operates through two distinct areas:
+
+- **Public landing page** — Citizens can read official news and download institutional documents without logging in.
+- **Protected staff dashboard** — Authenticated portal users access their role-specific modules at `/dashboard`, where all operational work takes place. Access is granted by token-based authentication and controlled at every API route.
+
+## Who uses the portal
+
+Four roles make up the portal's user base:
+
+| Role | Who they are |
+|------|-------------|
+| **Coordinador** | Regional coordinators responsible for submitting biweekly operational reports |
+| **Prensa** | Press and communications staff who publish official news to the public portal |
+| **Gestión Humana** | HR staff who review, approve, and manage coordinator report submissions |
+| **Administrador** | System administrators who manage all users, view system metrics, and have full access to every module |
+
+## How the core workflow runs
+
+The portal is built around a recurring operational cycle:
+
+1. **Coordinadores** upload biweekly reports (by the 15th and 30th of each month) through the **Subir Reportes** module.
+2. **Gestión Humana** reviews submitted reports in the **Revisión Reportes** module, marking them as reviewed or flagging them.
+3. **Administradores** oversee the entire system — managing user accounts, monitoring system metrics, and maintaining the activity log (**Bitacora**).
+4. **Prensa** operates independently, publishing and managing news articles that appear on the public portal.
+
+## Technology and access
+
+Portal VEN 911 is a web-based application — no installation is required. It runs in any modern browser and is accessible from any device with an internet connection. Your administrator creates your account and assigns your role before your first login. Files such as reports and institutional formats are stored in Google Drive, and all data is backed by a serverless PostgreSQL database.
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/quickstart">
+    Log in for the first time and complete your first task.
+  </Card>
+  <Card title="Roles and permissions" icon="shield-halved" href="/roles-and-permissions">
+    See exactly what each role can access and do.
+  </Card>
+  <Card title="Dashboard overview" icon="gauge" href="/features/dashboard">
+    Learn what you see when you first log in.
+  </Card>
+  <Card title="API reference" icon="code" href="/api/auth/overview">
+    Explore the REST API endpoints that power the portal.
+  </Card>
+</CardGroup>

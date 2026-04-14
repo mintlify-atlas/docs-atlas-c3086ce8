@@ -1,0 +1,98 @@
+{
+  "projectType": "saas",
+  "projectName": "VEN 911",
+  "projectDescription": "Portal VEN 911 is a full-stack internal management platform for Venezuela's national emergency response system, providing role-based dashboards for coordinators, press, HR staff, and administrators to manage reports, news, documents, and users.",
+  "theme": "almond",
+  "primaryColor": "#2c8c54",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "roles-and-permissions"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/reports",
+              "features/news",
+              "features/formats",
+              "features/user-management"
+            ]
+          },
+          {
+            "group": "Setup & Configuration",
+            "pages": [
+              "setup/environment",
+              "setup/database",
+              "setup/google-drive",
+              "setup/deployment"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/overview",
+              "api/auth/login"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/reports",
+              "api/news",
+              "api/formats",
+              "api/users",
+              "api/drive"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Role-based access control with four roles: Coordinador, Prensa, Gestión Humana, and Administrador",
+    "Biweekly report submission by coordinators with Google Drive file storage",
+    "HR report review and approval workflow",
+    "News publishing and management with visibility control",
+    "Institutional document/format library with public download access",
+    "Admin user management and system metrics dashboard",
+    "JWT-based authentication stored in localStorage",
+    "NeonDB (serverless PostgreSQL) for all persistent data",
+    "Public-facing landing page with news and downloadable formats",
+    "Responsive dashboard with collapsible sidebar navigation"
+  ],
+  "publicApiSurface": [
+    "POST /api/auth/login",
+    "GET /api/news",
+    "POST /api/news",
+    "DELETE /api/news/[id]",
+    "GET /api/reports",
+    "POST /api/reports",
+    "PUT /api/reports/[id]/review",
+    "GET /api/formats",
+    "POST /api/formats",
+    "PUT /api/formats",
+    "DELETE /api/formats",
+    "GET /api/users",
+    "POST /api/users",
+    "PUT /api/users/[id]",
+    "DELETE /api/users/[id]",
+    "GET /api/drive/download",
+    "GET /api/health/db-check"
+  ]
+}

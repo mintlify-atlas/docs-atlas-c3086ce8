@@ -1,0 +1,224 @@
+---
+title: 'REST API endpoints for news articles'
+description: 'GET, POST /api/news and PUT, DELETE /api/news/[id] — manage VEN 911 news articles. POST and DELETE require Prensa or Administrador role.'
+---
+
+The news API manages VEN 911 portal articles. Unauthenticated users and non-admin roles see only published (`visible: true`) articles, while Administrador users see everything. Creating, updating, and deleting articles requires the `Prensa` or `Administrador` role.
+
+<Tabs>
+  <Tab title="GET /api/news">
+
+    Returns a list of news articles. Authentication is optional. When a valid Administrador token is provided, all articles are returned regardless of visibility. All other callers receive only articles where `visible` is `true`.
+
+    **Required role:** None (public). Administrador token unlocks hidden articles.
+
+    ### Request
+
+    <ParamField header="Authorization" type="string">
+      Optional Bearer token. Providing an Administrador token returns all articles including hidden ones.
+    </ParamField>
+
+    ### Response
+
+    Returns an array of news article objects ordered by `published_at` descending.
+
+    <ResponseField name="id" type="number">
+      Unique article identifier.
+    </ResponseField>
+
+    <ResponseField name="title" type="string">
+      Article headline.
+    </ResponseField>
+
+    <ResponseField name="content" type="string">
+      Full article body text.
+    </ResponseField>
+
+    <ResponseField name="image_url" type="string">
+      URL of the article's cover image. May be `null`.
+    </ResponseField>
+
+    <ResponseField name="author_id" type="number">
+      ID of the user who published the article.
+    </ResponseField>
+
+    <ResponseField name="visible" type="boolean">
+      Whether the article is publicly visible. Defaults to `true` on creation.
+    </ResponseField>
+
+    <ResponseField name="published_at" type="string">
+      ISO 8601 timestamp set automatically at insert time.
+    </ResponseField>
+
+    <ResponseField name="author_name" type="string">
+      Display name of the author.
+    </ResponseField>
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    # Public request — returns only visible articles
+    curl https://your-portal-url/api/news
+
+    # Administrador request — returns all articles
+    curl https://your-portal-url/api/news \
+      -H "Authorization: Bearer {token}"
+    ```
+
+  </Tab>
+  <Tab title="POST /api/news">
+
+    Creates a new news article. The `author_id` is set automatically from the authenticated user's token.
+
+    **Required role:** `Prensa` or `Administrador`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="title" type="string" required>
+      Article headline.
+    </ParamField>
+
+    <ParamField body="content" type="string" required>
+      Full article body text.
+    </ParamField>
+
+    <ParamField body="image_url" type="string">
+      URL of a cover image. If omitted, stored as `null`.
+    </ParamField>
+
+    <ParamField body="visible" type="boolean" default="true">
+      Set to `false` to save the article as a draft. Defaults to `true` if omitted.
+    </ParamField>
+
+    ### Response
+
+    Returns the created article object (see field descriptions in the GET tab). HTTP status `201`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X POST https://your-portal-url/api/news \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Sistema 911 amplía cobertura",
+        "content": "El sistema de emergencias...",
+        "image_url": "https://example.com/imagen.jpg",
+        "visible": true
+      }'
+    ```
+
+  </Tab>
+  <Tab title="PUT /api/news/[id]">
+
+    Updates one or more fields of an existing article. All body fields are optional; only the fields you provide will be updated (others are preserved via `COALESCE`).
+
+    **Required role:** `Prensa` or `Administrador`
+
+    ### Path parameters
+
+    <ParamField path="id" type="number" required>
+      The ID of the article to update.
+    </ParamField>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="title" type="string">
+      Updated headline.
+    </ParamField>
+
+    <ParamField body="content" type="string">
+      Updated article body.
+    </ParamField>
+
+    <ParamField body="image_url" type="string">
+      Updated cover image URL.
+    </ParamField>
+
+    <ParamField body="visible" type="boolean">
+      Updated visibility flag. Use `false` to hide the article from public feeds.
+    </ParamField>
+
+    ### Response
+
+    Returns the full updated article object. HTTP status `200`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `404`  | No article found with the given ID. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X PUT https://your-portal-url/api/news/7 \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{"visible": false}'
+    ```
+
+  </Tab>
+  <Tab title="DELETE /api/news/[id]">
+
+    Deletes a news article permanently.
+
+    **Required role:** `Prensa` or `Administrador`
+
+    ### Path parameters
+
+    <ParamField path="id" type="number" required>
+      The ID of the article to delete.
+    </ParamField>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    ### Response
+
+    ```json
+    { "success": true }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X DELETE https://your-portal-url/api/news/7 \
+      -H "Authorization: Bearer {token}"
+    ```
+
+  </Tab>
+</Tabs>

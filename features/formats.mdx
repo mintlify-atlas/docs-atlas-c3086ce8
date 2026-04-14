@@ -1,0 +1,93 @@
+---
+title: "Managing downloadable institutional formats"
+description: "Administrators and HR staff upload institutional format documents to VEN 911. All documents are publicly available for download on the portal landing page."
+---
+
+The **Formatos** module is the portal's library of official institutional documents — planillas, procedural templates, role assignment sheets, and any other standardized form that staff need to complete their work. Files are stored in Google Drive and linked in the database. Anyone can download them: logged-in staff through the dashboard, and the general public through the landing page without a login.
+
+Navigate to **Formatos** in the sidebar at `/dashboard/formatos`.
+
+---
+
+## Who can manage formats
+
+| Action | Administrador | Gestión Humana | All other roles | Public (no login) |
+|--------|:-------------:|:--------------:|:---------------:|:-----------------:|
+| View and download | Yes | Yes | Yes | Yes (landing page) |
+| Upload new format | Yes | Yes | No | No |
+| Edit name / description | Yes | Yes | No | No |
+| Delete format | Yes | Yes | No | No |
+
+---
+
+## Format fields
+
+Each format document has three fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Nombre del Formato** | Yes | The display name shown on cards in the dashboard and the landing page |
+| **Descripción** | No | A short explanation of what the document is for. Shown in italic on the card. Defaults to _"Sin descripción proporcionada."_ if left blank |
+| **Archivo** | Yes | The file to upload. PDF, Excel, and Word files are accepted. The file is sent directly to Google Drive |
+
+---
+
+## Uploading a format
+
+<Steps>
+  <Step title="Open the upload modal">
+    Click **Nuevo Formato** at the top right of the page. A modal dialog opens.
+  </Step>
+  <Step title="Enter the format name">
+    Type a descriptive name in **Nombre del Formato** — for example, _"Formato de Rol de Guardia"_. This field is required.
+  </Step>
+  <Step title="Add an optional description">
+    Fill in **Descripción** to explain the document's purpose. This helps staff find the right form quickly.
+  </Step>
+  <Step title="Select the file">
+    Click the upload area or drag a file onto it. Accepted types: PDF, Excel (`.xlsx`, `.xls`), Word (`.doc`, `.docx`). The file name appears once selected.
+  </Step>
+  <Step title="Publish the format">
+    Click **Publicar Formato**. The button shows "Subiendo a Drive…" while the file transfers. On success, the modal closes and the new format card appears in the grid.
+  </Step>
+</Steps>
+
+The API uploads the file to the Google Drive folder configured in `GOOGLE_DRIVE_FORMATS_FOLDER_ID`, then saves a record to the database containing: `name`, `description`, `file_drive_id`, `file_name`, and `updated_at`.
+
+---
+
+## Editing a format
+
+To update a format's name or description without replacing the file, send a `PUT /api/formats` request with the format `id`, updated `name`, and updated `description`. The file stored in Google Drive is not changed by an edit operation.
+
+<Info>
+  The edit action is available through the API. A UI edit form is not yet present in the dashboard — the trash icon is currently the only visible action per card. Edits can be performed programmatically or via the API reference.
+</Info>
+
+---
+
+## Deleting a format
+
+Click the trash icon that appears when you hover over a format card. A confirmation dialog asks: _"¿Está seguro de eliminar este formato permanentemente?"_ Confirming sends a `DELETE /api/formats` request.
+
+<Warning>
+  Deleting a format is permanent and irreversible. The portal removes the database record **and** calls the Google Drive API to delete the file from Drive. Once confirmed, the document cannot be recovered.
+</Warning>
+
+---
+
+## Public download
+
+Every format card in the dashboard includes a **Descargar Plantilla** button. The download URL follows this pattern:
+
+```
+/api/drive/download?fileId={driveFileId}&public=1
+```
+
+This endpoint proxies the file from Google Drive and does not require authentication when `public=1` is set. The same URL pattern is used on the public landing page, where the six most recently updated formats are shown sorted alphabetically.
+
+---
+
+## Format display on the landing page
+
+The public landing page fetches formats from `GET /api/formats`, which requires no authentication and returns all records sorted alphabetically by name. The landing page displays up to six formats. Adding a seventh or more does not remove older entries — all are available in the dashboard, but only six appear on the public page.

@@ -1,0 +1,127 @@
+---
+title: 'POST /api/auth/login'
+description: 'POST /api/auth/login — authenticates a VEN 911 user by email and password. Returns a signed JWT token and user profile object on success.'
+---
+
+The login endpoint authenticates a VEN 911 portal user and returns a signed JWT token along with the user's profile. No authentication is required to call this endpoint.
+
+## Request
+
+**No authentication required.**
+
+### Body parameters
+
+<ParamField body="email" type="string" required>
+  The user's email address. Whitespace is trimmed and the value is lowercased before lookup.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's password. Whitespace is trimmed before comparison.
+</ParamField>
+
+## Response
+
+### 200 — success
+
+<ResponseField name="user" type="object" required>
+  The authenticated user's profile.
+  <Expandable title="properties" defaultOpen>
+    <ResponseField name="user.id" type="string" required>
+      Unique identifier for the user.
+    </ResponseField>
+    <ResponseField name="user.name" type="string" required>
+      Display name of the user.
+    </ResponseField>
+    <ResponseField name="user.email" type="string" required>
+      Email address of the user.
+    </ResponseField>
+    <ResponseField name="user.role" type="string" required>
+      Role assigned to the user. One of `Coordinador`, `Prensa`, `Gestión Humana`, or `Administrador`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="token" type="string" required>
+  A signed JWT. Valid for 1 day. Pass this value as `Authorization: Bearer <token>` on all protected requests.
+</ResponseField>
+
+### Error responses
+
+| Status | Message | Cause |
+|---|---|---|
+| `400` | `Faltan credenciales` | `email` or `password` was not provided in the request body. |
+| `401` | `Credenciales inválidas` | No active user found for the given email, or the password does not match. |
+| `403` | `Este usuario no tiene acceso al sistema` | The user exists but their role is not in the allowed list. |
+| `500` | `Error interno del servidor` | An unexpected server-side error occurred. |
+
+## Examples
+
+<RequestExample>
+
+```bash cURL
+curl --request POST \
+  --url https://your-domain.com/api/auth/login \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "email": "user@example.com",
+    "password": "your-password"
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200
+{
+  "user": {
+    "id": "42",
+    "name": "Ana Rodríguez",
+    "email": "user@example.com",
+    "role": "Coordinador"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+```json 400
+{
+  "error": "Faltan credenciales"
+}
+```
+
+```json 401
+{
+  "error": "Credenciales inválidas"
+}
+```
+
+```json 403
+{
+  "error": "Este usuario no tiene acceso al sistema"
+}
+```
+
+```json 500
+{
+  "error": "Error interno del servidor"
+}
+```
+
+</ResponseExample>
+
+## Using the token
+
+After a successful login, include the token in the `Authorization` header on all protected requests:
+
+```bash
+curl --request GET \
+  --url https://your-domain.com/api/protected-resource \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+Tokens expire after 1 day. When yours expires, repeat the login request to get a new one.
+
+<Warning>
+  This endpoint compares passwords as plain text. Ensure your deployment uses HTTPS to protect credentials in transit.
+</Warning>

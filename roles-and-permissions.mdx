@@ -1,0 +1,155 @@
+---
+title: "Roles and permissions in VEN 911"
+description: "VEN 911 uses four roles — Coordinador, Prensa, Gestión Humana, and Administrador — each with specific dashboard modules and access restrictions."
+---
+
+Portal VEN 911 enforces a strict role-based access model. When you log in, the system reads your assigned role from your account and uses it to determine which sidebar modules you see, which API endpoints you can call, and what actions you can perform. You cannot access modules outside your role, and you cannot change your own role assignment.
+
+<Warning>
+  Role assignment is managed exclusively by an **Administrador**. If you believe your role is incorrect or you need access to a module you cannot see, contact your system administrator.
+</Warning>
+
+## Role overview
+
+<CardGroup cols={2}>
+  <Card title="Coordinador" icon="clipboard-list">
+    Regional coordinator. Submits biweekly operational reports through the portal.
+  </Card>
+  <Card title="Prensa" icon="newspaper">
+    Press and communications. Publishes official news articles to the public portal.
+  </Card>
+  <Card title="Gestión Humana" icon="user-check">
+    HR staff. Reviews all coordinator report submissions and manages institutional formats.
+  </Card>
+  <Card title="Administrador" icon="shield-halved">
+    System administrator. Full access to all modules, user management, and system metrics.
+  </Card>
+</CardGroup>
+
+## Module access by role
+
+The table below shows which sidebar modules each role can access:
+
+| Module | Coordinador | Prensa | Gestión Humana | Administrador |
+|--------|:-----------:|:------:|:--------------:|:-------------:|
+| **Inicio** (dashboard home) | ✓ | ✓ | ✓ | ✓ |
+| **Noticias** — view | ✓ | ✓ | ✓ | ✓ |
+| **Noticias** — publish | — | ✓ | — | ✓ |
+| **Formatos** — view/download | ✓ | ✓ | ✓ | ✓ |
+| **Formatos** — upload/delete | — | — | ✓ | ✓ |
+| **Subir Reportes** | ✓ | — | — | — |
+| **Revisión Reportes** | — | — | ✓ | — |
+| **Usuarios** | — | — | — | ✓ |
+| **Bitacora** | — | — | — | ✓ |
+
+## Detailed permissions by role
+
+<AccordionGroup>
+  <Accordion title="Coordinador" icon="clipboard-list" defaultOpen={false}>
+    **What you can do:**
+
+    - View the dashboard home (**Inicio**), including recent news and role-specific system notices
+    - Read all published news articles in **Noticias**
+    - View and download institutional documents in **Formatos**
+    - Upload your biweekly reports in **Subir Reportes** (`POST /api/reports`)
+    - View your own submitted reports (`GET /api/reports` — returns only your submissions)
+
+    **What you cannot do:**
+
+    - Publish or delete news articles
+    - Upload, edit, or delete formats
+    - Access **Revisión Reportes** — you cannot see other coordinators' reports or review any submissions
+    - Access **Usuarios** or **Bitacora**
+
+    <Note>
+      The dashboard home displays a deadline reminder: reports are due by the 15th and 30th of each month.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Prensa" icon="newspaper" defaultOpen={false}>
+    **What you can do:**
+
+    - View the dashboard home (**Inicio**), including recent news and system notices
+    - Read, publish, and delete news articles in **Noticias** (`POST /api/news`, `DELETE /api/news/[id]`)
+    - View and download institutional documents in **Formatos**
+
+    **What you cannot do:**
+
+    - Upload, edit, or delete formats
+    - Access **Subir Reportes** — you cannot submit or view any coordinator reports
+    - Access **Revisión Reportes**, **Usuarios**, or **Bitacora**
+
+    <Tip>
+      News articles you publish appear immediately on the public landing page and in the dashboard news feed for all staff.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Gestión Humana" icon="user-check" defaultOpen={false}>
+    **What you can do:**
+
+    - View the dashboard home (**Inicio**), including a reminder when reports are pending your review
+    - Read all published news articles in **Noticias**
+    - View, download, upload, and delete institutional documents in **Formatos** (`POST /api/formats`, `DELETE /api/formats`)
+    - Access **Revisión Reportes** to view all submitted coordinator reports (`GET /api/reports` — returns all reports from all coordinators)
+    - Mark reports as reviewed and add comments (`PUT /api/reports/[id]/review`)
+
+    **What you cannot do:**
+
+    - Publish or delete news articles
+    - Access **Subir Reportes** — you do not submit reports yourself
+    - Access **Usuarios** or **Bitacora**
+  </Accordion>
+
+  <Accordion title="Administrador" icon="shield-halved" defaultOpen={false}>
+    **What you can do:**
+
+    Administrators have unrestricted access to every module in the portal:
+
+    - View the dashboard home with live **System Metrics**: user count, report count, news count, and format count
+    - Read all published news articles in **Noticias**; publish and delete articles
+    - View, download, upload, and delete institutional documents in **Formatos**
+    - View all coordinator reports across the system (`GET /api/reports`)
+    - Create, edit, and deactivate user accounts in **Usuarios** (`GET /api/users`, `POST /api/users`, `PUT /api/users/[id]`, `DELETE /api/users/[id]`)
+    - View the activity log in **Bitacora**
+
+    **What you cannot do:**
+
+    There are no module-level restrictions for administrators. All API routes are accessible.
+
+    <Warning>
+      As an administrator, you are responsible for role assignment. Assign roles carefully — a Coordinador assigned as Administrador will have full access to all user data and system settings.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## API access summary
+
+The following table maps roles to the API operations they are authorized to perform:
+
+| API Endpoint | Coordinador | Prensa | Gestión Humana | Administrador |
+|--------------|:-----------:|:------:|:--------------:|:-------------:|
+| `GET /api/reports` (own only) | ✓ | — | — | — |
+| `GET /api/reports` (all) | — | — | ✓ | ✓ |
+| `POST /api/reports` | ✓ | — | — | — |
+| `PUT /api/reports/[id]/review` | — | — | ✓ | — |
+| `GET /api/news` | ✓ | ✓ | ✓ | ✓ |
+| `POST /api/news` | — | ✓ | — | ✓ |
+| `DELETE /api/news/[id]` | — | ✓ | — | ✓ |
+| `GET /api/formats` | ✓ | ✓ | ✓ | ✓ |
+| `POST /api/formats` | — | — | ✓ | ✓ |
+| `DELETE /api/formats` | — | — | ✓ | ✓ |
+| `GET /api/users` | — | — | — | ✓ |
+| `POST /api/users` | — | — | — | ✓ |
+| `PUT /api/users/[id]` | — | — | — | ✓ |
+| `DELETE /api/users/[id]` | — | — | — | ✓ |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/quickstart">
+    Log in and complete your first task for your role.
+  </Card>
+  <Card title="User management" icon="users" href="/features/user-management">
+    How administrators create accounts and assign roles.
+  </Card>
+</CardGroup>

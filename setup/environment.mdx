@@ -1,0 +1,114 @@
+---
+title: 'Environment variables and configuration'
+description: 'Configure Portal VEN 911 by setting the required environment variables for the database, authentication, and Google Drive integration before deploying.'
+---
+
+Portal VEN 911 reads all runtime configuration from environment variables. Before starting the development server or deploying to production, you must create a `.env.local` file at the project root (or set these variables in your hosting platform) with the values described below. The application will start without them, but database queries, authentication, and file uploads will fail.
+
+## Database
+
+| Variable | Description |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string for your NeonDB project |
+
+The connection string follows the standard PostgreSQL URI format. NeonDB requires SSL, so always append `?sslmode=require`.
+
+```
+postgresql://user:password@ep-example-name-123456.us-east-1.aws.neon.tech/portal911?sslmode=require
+```
+
+You can copy the exact string from the **Connection Details** panel in the NeonDB dashboard. See [Setting up the NeonDB database](/setup/database) for step-by-step instructions.
+
+## Authentication
+
+| Variable | Description |
+| --- | --- |
+| `JWT_SECRET` | Secret key used to sign and verify JWT session tokens |
+
+Generate a cryptographically random string of at least 32 characters. Tokens are signed with HMAC-SHA256, so a short or predictable secret compromises all user sessions.
+
+```bash
+# Generate a suitable secret with OpenSSL
+openssl rand -hex 32
+```
+
+<Warning>
+  Do not use the default value (`portal911_supersecret_default_key_keep_safe`) that ships in the source code. Replace it with your own secret before deploying to any environment that handles real user data.
+</Warning>
+
+## Google Drive
+
+Portal VEN 911 uploads coordinator reports and institutional format documents to Google Drive. Two authentication methods are supported. Configure one set of credentials — the application checks for OAuth2 credentials first, then falls back to a service account.
+
+### Method 1 — OAuth2 (personal Google account)
+
+| Variable | Description |
+| --- | --- |
+| `GOOGLE_OAUTH_CLIENT_ID` | OAuth2 client ID from Google Cloud Console |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | OAuth2 client secret |
+| `GOOGLE_OAUTH_REFRESH_TOKEN` | Long-lived refresh token for your Google account |
+
+OAuth2 credentials are tied to a personal Google account. Use this method for local development or when you need uploads to land in a personal Drive. For production deployments shared across multiple operators, use a service account instead.
+
+### Method 2 — Service account (recommended for production)
+
+| Variable | Description |
+| --- | --- |
+| `GOOGLE_CLIENT_EMAIL` | Service account email address (e.g. `portal911@project.iam.gserviceaccount.com`) |
+| `GOOGLE_PRIVATE_KEY` | RSA private key from the service account JSON key file — newlines must be escaped as `\n` |
+
+A service account does not belong to any individual user, making it the right choice for production. See [Integrating Google Drive for file storage](/setup/google-drive) for the full setup walkthrough.
+
+<Warning>
+  When you copy `GOOGLE_PRIVATE_KEY` from the JSON key file into an environment variable, the literal newline characters inside the PEM block must be replaced with the two-character sequence `\n`. Most hosting platforms (including Vercel) handle this automatically when you paste the raw value into their UI, but check the result if uploads fail with an authentication error.
+</Warning>
+
+### Drive folder IDs
+
+Regardless of which authentication method you use, you must also set the two folder variables so the application knows where to store each file type.
+
+| Variable | Description |
+| --- | --- |
+| `GOOGLE_DRIVE_REPORTS_FOLDER_ID` | Drive folder ID for biweekly coordinator report uploads |
+| `GOOGLE_DRIVE_FORMATS_FOLDER_ID` | Drive folder ID for institutional format document uploads |
+
+The folder ID is the last segment of the folder's URL in Google Drive:
+
+```
+https://drive.google.com/drive/folders/1A2B3C4D5E6F7G8H9I0J
+                                        ^^^^^^^^^^^^^^^^^^^^
+                                        This is the folder ID
+```
+
+<Note>
+  If no Google Drive credentials are configured, the application will still accept file uploads but will store a placeholder ID (e.g. `fake-drive-id-1713000000000`) in the database instead of a real Drive file ID. Files uploaded in this mode are not actually saved anywhere. This behavior exists to allow UI testing without Drive access — never rely on it in production.
+</Note>
+
+## Complete `.env.local` example
+
+Create this file at the root of your project. Replace every placeholder with your actual values.
+
+```bash .env.local
+# ── Database ──────────────────────────────────────────────────────────────────
+DATABASE_URL=postgresql://portal911_owner:your-db-password@ep-example-name-123456.us-east-1.aws.neon.tech/portal911?sslmode=require
+
+# ── Authentication ────────────────────────────────────────────────────────────
+JWT_SECRET=your-32-character-or-longer-random-secret-here
+
+# ── Google Drive — Service Account (recommended for production) ───────────────
+GOOGLE_CLIENT_EMAIL=portal911@your-gcp-project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAK...\n-----END RSA PRIVATE KEY-----\n"
+
+# ── Google Drive — OAuth2 (alternative, for personal accounts) ────────────────
+# GOOGLE_OAUTH_CLIENT_ID=123456789-abcdefg.apps.googleusercontent.com
+# GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-your-client-secret
+# GOOGLE_OAUTH_REFRESH_TOKEN=1//your-refresh-token
+
+# ── Google Drive folder IDs ───────────────────────────────────────────────────
+GOOGLE_DRIVE_REPORTS_FOLDER_ID=1A2B3C4D5E6F7G8H9I0J_reports
+GOOGLE_DRIVE_FORMATS_FOLDER_ID=1A2B3C4D5E6F7G8H9I0J_formats
+```
+
+<Tip>
+  Add `.env.local` to your `.gitignore` file so credentials are never committed to version control. Next.js already excludes it by default in generated projects.
+</Tip>

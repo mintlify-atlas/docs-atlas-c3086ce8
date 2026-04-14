@@ -1,97 +1,61 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "VEN 911: Internal Management Portal"
+description: "Portal VEN 911 is the internal platform for Venezuela's 911 emergency network, with role-based dashboards for coordinators, press, HR, and admins."
 ---
 
-## Setting up
+Portal VEN 911 is a role-based internal management system for the **Comando Nacional VEN 911** — Venezuela's integrated emergency response network. It provides dedicated workflows for each team: coordinators submit biweekly reports, press staff publish official news, HR reviews submissions, and administrators manage users and system settings. All data lives in a serverless PostgreSQL database and files are stored in Google Drive.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Get Started" icon="rocket" href="/quickstart">
+    Set up your account and access the dashboard in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Roles & Permissions" icon="shield-halved" href="/roles-and-permissions">
+    Understand what each role can access and do in the portal.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Core Features" icon="grid-2" href="/features/dashboard">
+    Explore the dashboard, reports, news, formats, and user management.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="API Reference" icon="code" href="/api/auth/overview">
+    Full reference for all REST API endpoints.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How the portal works
 
-Everything you need to create world-class documentation.
+VEN 911 has two main surfaces: a **public landing page** where citizens can find news and download institutional documents, and a **protected dashboard** where authenticated staff manage operations.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+<Steps>
+  <Step title="Log in with your credentials">
+    Go to the portal login page and enter your institutional email and password. Your administrator will have created your account and assigned your role.
+  </Step>
+  <Step title="Access your role-specific dashboard">
+    After login, you are directed to your personalized dashboard. The sidebar shows only the modules available for your role.
+  </Step>
+  <Step title="Perform your operational tasks">
+    Coordinators upload biweekly reports, press staff publish news articles, HR staff review submitted reports, and administrators manage users and view system metrics.
+  </Step>
+  <Step title="Download documents anytime">
+    Institutional formats and documents are publicly available on the landing page — no login required to download them.
+  </Step>
+</Steps>
 
-## Need inspiration?
+## Key capabilities
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Biweekly reports" icon="file-arrow-up" href="/features/reports">
+    Coordinators submit PDF or Excel reports for each two-week period, stored in Google Drive.
+  </Card>
+  <Card title="News management" icon="newspaper" href="/features/news">
+    Press staff publish and manage official news articles visible on the public portal.
+  </Card>
+  <Card title="Institutional formats" icon="file-arrow-down" href="/features/formats">
+    Upload and manage downloadable documents available publicly to all staff.
+  </Card>
+  <Card title="User management" icon="users" href="/features/user-management">
+    Administrators create and manage user accounts and role assignments.
+  </Card>
+</CardGroup>
+
+<Note>
+  Access to each module is strictly controlled by role. If you cannot see a menu item, contact your administrator to verify your role assignment.
+</Note>

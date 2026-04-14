@@ -1,0 +1,109 @@
+---
+title: 'File download endpoint for Drive files'
+description: 'GET /api/drive/download — stream a file from Google Drive by file ID. Supports public access for institutional formats and authenticated access for reports.'
+---
+
+The Drive download endpoint acts as a server-side proxy between the client and Google Drive. It fetches the file on the server and streams it directly to the client, keeping Drive links private and off the browser. For institutional formats shown on the public landing page, no authentication is required when `public=1` is set. For all other files (e.g., report PDFs), a valid Bearer token is required.
+
+## GET /api/drive/download
+
+### Query parameters
+
+<ParamField query="fileId" type="string" required>
+  The Google Drive file ID to download. Obtain this from the `file_drive_id` field on a report or format record.
+</ParamField>
+
+<ParamField query="public" type="string">
+  Set to `1` to bypass authentication. Intended for institutional format downloads initiated from the public landing page. Omit or set to any other value to require a Bearer token.
+</ParamField>
+
+### Request headers
+
+<ParamField header="Authorization" type="string">
+  Bearer token. Required unless `public=1` is set. Example: `Bearer <token>`
+</ParamField>
+
+### Response
+
+On success, the endpoint returns a binary file stream. The response body is the raw file content.
+
+| Header | Value |
+|--------|-------|
+| `Content-Type` | MIME type of the file as stored in Google Drive (e.g., `application/pdf`). Falls back to `application/octet-stream` if unknown. |
+| `Content-Disposition` | `attachment; filename="{url-encoded filename}"` — triggers a download prompt in the browser. |
+| `Cache-Control` | `private, no-cache` |
+
+### Error codes
+
+| Status | Description |
+|--------|-------------|
+| `400`  | `fileId` query parameter is missing. |
+| `401`  | No valid token provided and `public` is not `1`. |
+| `500`  | Google Drive request failed or file could not be retrieved. |
+
+### Examples
+
+```bash
+# Download an institutional format (no auth required)
+curl "https://your-portal-url/api/drive/download?fileId=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms&public=1" \
+  -o formulario.pdf
+
+# Download a private report (auth required)
+curl "https://your-portal-url/api/drive/download?fileId=1Abc123XYZ" \
+  -H "Authorization: Bearer {token}" \
+  -o reporte-enero.pdf
+```
+
+<Note>
+  The `fileId` values for institutional formats are available from the `file_drive_id` field returned by `GET /api/formats`. The `fileId` values for reports are available from the `file_drive_id` field returned by `GET /api/reports`.
+</Note>
+
+---
+
+## GET /api/health/db-check
+
+A diagnostic endpoint that verifies the database connection is healthy. Returns the current server time, PostgreSQL version, list of tables, and active user count.
+
+**Required role:** None (no authentication required)
+
+### Response — 200 success
+
+```json
+{
+  "success": true,
+  "message": "Conexión exitosa a NeonDB",
+  "responseTime": "42ms",
+  "details": {
+    "current_time": "2025-01-15T12:00:00.000Z",
+    "version": "PostgreSQL 16.1 on x86_64-pc-linux-gnu...",
+    "table_count": 5,
+    "tables": ["departments", "formats", "news", "reports", "users"],
+    "user_count": 12
+  }
+}
+```
+
+### Response — 500 error
+
+```json
+{
+  "success": false,
+  "message": "Error al conectar con NeonDB",
+  "error": "connection refused",
+  "details": {
+    "code": "ECONNREFUSED",
+    "hint": null,
+    "position": null
+  }
+}
+```
+
+### Example
+
+```bash
+curl https://your-portal-url/api/health/db-check
+```
+
+<Tip>
+  Use this endpoint after deployment to confirm that `DATABASE_URL` is correctly configured and the database is reachable. It is also referenced in the [deployment checklist](/setup/deployment).
+</Tip>

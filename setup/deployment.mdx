@@ -1,0 +1,132 @@
+---
+title: 'Deploying Portal VEN 911 to production'
+description: 'Deploy Portal VEN 911 on Vercel or any Node.js host. Configure environment variables, connect your NeonDB database, and set up Google Drive before launching.'
+---
+
+Portal VEN 911 is a standard Next.js 16 application. You can deploy it to Vercel with zero infrastructure configuration, or to any server that runs Node.js 18 or later. Before deploying, complete the [environment variables](/setup/environment), [database setup](/setup/database), and [Google Drive integration](/setup/google-drive) steps.
+
+## Available npm scripts
+
+| Script | Command | Description |
+| --- | --- | --- |
+| Development server | `npm run dev` | Starts a local dev server with hot reload at `http://localhost:3000` |
+| Production build | `npm run build` | Compiles and optimizes the application for production |
+| Production server | `npm start` | Starts the compiled application (requires a prior `npm run build`) |
+
+## Deployment options
+
+<Tabs>
+  <Tab title="Vercel (recommended)">
+    Vercel is the hosting platform built by the Next.js team. It handles builds, deploys, and edge caching automatically. NeonDB's serverless driver works without any additional configuration on Vercel's serverless runtime.
+
+    <Steps>
+      <Step title="Push your code to GitHub">
+        Create a repository on GitHub and push the portal911 codebase. Vercel connects directly to your repository and deploys on every push to the configured branch.
+      </Step>
+      <Step title="Import the repository on Vercel">
+        Go to [vercel.com/new](https://vercel.com/new), click **Add New → Project**, and select your repository. Vercel automatically detects Next.js and sets the build command to `next build`.
+      </Step>
+      <Step title="Add environment variables">
+        Before clicking **Deploy**, go to the **Environment Variables** section and add every variable listed in [Environment variables and configuration](/setup/environment):
+
+        - `DATABASE_URL`
+        - `JWT_SECRET`
+        - `GOOGLE_CLIENT_EMAIL` (or the OAuth2 equivalents)
+        - `GOOGLE_PRIVATE_KEY`
+        - `GOOGLE_DRIVE_REPORTS_FOLDER_ID`
+        - `GOOGLE_DRIVE_FORMATS_FOLDER_ID`
+
+        When pasting `GOOGLE_PRIVATE_KEY`, paste the raw multi-line PEM value directly — Vercel encodes newlines automatically.
+      </Step>
+      <Step title="Deploy">
+        Click **Deploy**. Vercel runs `npm run build` and publishes the output. Your portal is live at the assigned `.vercel.app` domain once the build succeeds.
+      </Step>
+    </Steps>
+
+    <Tip>
+      To add a custom domain, go to your project in the Vercel dashboard, open **Settings → Domains**, and add your domain. Vercel provisions a TLS certificate automatically via Let's Encrypt.
+    </Tip>
+  </Tab>
+  <Tab title="VPS / self-hosted server">
+    Deploy to any Linux server with Node.js 18+ installed. Using a process manager like PM2 keeps the portal running after the SSH session ends and restarts it automatically if it crashes.
+
+    <Steps>
+      <Step title="Clone the repository">
+        ```bash
+        git clone https://github.com/your-org/portal911.git
+        cd portal911
+        ```
+      </Step>
+      <Step title="Install dependencies">
+        ```bash
+        npm install
+        ```
+      </Step>
+      <Step title="Create the environment file">
+        Create a `.env.local` file in the project root with all required variables. See [Environment variables and configuration](/setup/environment) for the full list and a copy-ready example.
+
+        ```bash
+        nano .env.local
+        ```
+      </Step>
+      <Step title="Build the application">
+        ```bash
+        npm run build
+        ```
+
+        The build output is written to `.next/`. This step must be repeated every time you deploy updated code.
+      </Step>
+      <Step title="Start the production server">
+        <CodeGroup>
+
+        ```bash Without PM2
+        npm start
+        ```
+
+        ```bash With PM2 (recommended)
+        # Install PM2 globally if not already installed
+        npm install -g pm2
+
+        # Start the portal and name the process
+        pm2 start npm --name portal911 -- start
+
+        # Save the process list so it restarts on server reboot
+        pm2 save
+        pm2 startup
+        ```
+
+        </CodeGroup>
+      </Step>
+    </Steps>
+
+    <Note>
+      The production server listens on port 3000 by default. Use a reverse proxy such as Nginx or Caddy to terminate TLS and forward traffic from port 443 to `localhost:3000`.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Post-deployment checklist
+
+Run through these steps after every new deployment to confirm the portal is operating correctly.
+
+<Steps>
+  <Step title="Verify the database connection">
+    Visit `/api/health/db-check` in a browser. A successful response confirms that `DATABASE_URL` is set correctly and NeonDB is reachable.
+  </Step>
+  <Step title="Create the initial administrator user">
+    If this is a fresh deployment, insert the first `Administrador` user directly in the database. See [Setting up the NeonDB database — Create the first administrator user](/setup/database#create-the-first-administrator-user) for the SQL command.
+  </Step>
+  <Step title="Test login">
+    Open the portal and sign in with the administrator credentials you just created. Confirm you can reach the admin dashboard.
+  </Step>
+  <Step title="Verify Google Drive integration">
+    Log in as an `Administrador` or `Gestión Humana` user and upload at least one format document. Check the `formats` table in NeonDB to confirm that `file_drive_id` does not start with `fake-` and that the file appears in the Drive folder.
+  </Step>
+  <Step title="Publish a test news article">
+    Log in as a `Prensa` or `Administrador` user and publish a news article. Confirm it appears on the portal landing page.
+  </Step>
+</Steps>
+
+<Warning>
+  Do not leave the default `JWT_SECRET` value (`portal911_supersecret_default_key_keep_safe`) in any deployed environment. All JWT tokens are signed with this key — if it is predictable, an attacker can forge session tokens and impersonate any user.
+</Warning>

@@ -1,0 +1,251 @@
+---
+title: 'REST API endpoints for user management'
+description: 'GET, POST /api/users and PUT, DELETE /api/users/[id] — create, update, and delete VEN 911 user accounts. All endpoints require the Administrador role.'
+---
+
+The users API provides full CRUD access to VEN 911 user accounts. Every endpoint requires a valid token from an `Administrador` user. Passwords are hashed with bcrypt (cost factor 10) before being stored; the hash is never returned in responses.
+
+<Note>
+  There is no `GET /api/users/[id]` endpoint in the current implementation. To retrieve a single user, use `GET /api/users` and filter by `id` on the client.
+</Note>
+
+<Tabs>
+  <Tab title="GET /api/users">
+
+    Returns all user accounts with their associated department name.
+
+    **Required role:** `Administrador`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    ### Response
+
+    Returns an array of user objects ordered by `id` ascending.
+
+    <ResponseField name="id" type="number">
+      Unique user identifier.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Full display name.
+    </ResponseField>
+
+    <ResponseField name="email" type="string">
+      User's email address. Must be unique across the system.
+    </ResponseField>
+
+    <ResponseField name="role" type="string">
+      Assigned role. One of `Administrador`, `Coordinador`, `Gestión Humana`, or `Prensa`.
+    </ResponseField>
+
+    <ResponseField name="active" type="boolean">
+      Whether the account is active.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of account creation.
+    </ResponseField>
+
+    <ResponseField name="department_name" type="string">
+      Name of the user's department. `null` if no department is assigned.
+    </ResponseField>
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or is not an Administrador. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl https://your-portal-url/api/users \
+      -H "Authorization: Bearer {token}"
+    ```
+
+  </Tab>
+  <Tab title="POST /api/users">
+
+    Creates a new user account. The password is hashed with bcrypt before storage and is never included in the response.
+
+    **Required role:** `Administrador`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="name" type="string" required>
+      Full display name.
+    </ParamField>
+
+    <ParamField body="email" type="string" required>
+      Email address. Must be unique; a `400` error is returned if the email already exists.
+    </ParamField>
+
+    <ParamField body="password" type="string" required>
+      Plain-text password. Hashed with bcrypt (cost factor 10) before storage.
+    </ParamField>
+
+    <ParamField body="role" type="string" required>
+      Role to assign. One of `Administrador`, `Coordinador`, `Gestión Humana`, or `Prensa`.
+    </ParamField>
+
+    <ParamField body="department_id" type="number">
+      ID of the department to associate with the user. Stored as `null` if omitted.
+    </ParamField>
+
+    ### Response
+
+    Returns a subset of the created user. HTTP status `201`.
+
+    <ResponseField name="id" type="number">
+      Unique identifier of the new user.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Display name.
+    </ResponseField>
+
+    <ResponseField name="email" type="string">
+      Email address.
+    </ResponseField>
+
+    <ResponseField name="role" type="string">
+      Assigned role.
+    </ResponseField>
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `400`  | Email already exists in the database (PostgreSQL unique constraint violation). |
+    | `403`  | User is not authenticated or is not an Administrador. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X POST https://your-portal-url/api/users \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "María González",
+        "email": "m.gonzalez@ven911.gob.ve",
+        "password": "SecurePass123",
+        "role": "Coordinador",
+        "department_id": 4
+      }'
+    ```
+
+  </Tab>
+  <Tab title="PUT /api/users/[id]">
+
+    Updates one or more fields on an existing user. All body fields are optional; omitted fields are preserved via `COALESCE`. To change the password, include `password` in the body.
+
+    **Required role:** `Administrador`
+
+    ### Path parameters
+
+    <ParamField path="id" type="number" required>
+      The ID of the user to update.
+    </ParamField>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Updated display name.
+    </ParamField>
+
+    <ParamField body="email" type="string">
+      Updated email address.
+    </ParamField>
+
+    <ParamField body="role" type="string">
+      Updated role assignment.
+    </ParamField>
+
+    <ParamField body="department_id" type="number">
+      Updated department ID.
+    </ParamField>
+
+    <ParamField body="password" type="string">
+      New plain-text password. When provided, it is hashed with bcrypt and replaces the existing hash. Omit to leave the password unchanged.
+    </ParamField>
+
+    ### Response
+
+    Returns a subset of the updated user (`id`, `name`, `email`, `role`). HTTP status `200`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or is not an Administrador. |
+    | `404`  | No user found with the given ID. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X PUT https://your-portal-url/api/users/12 \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{"role": "Gestión Humana", "department_id": 2}'
+    ```
+
+  </Tab>
+  <Tab title="DELETE /api/users/[id]">
+
+    Permanently deletes a user account.
+
+    **Required role:** `Administrador`
+
+    <Warning>
+      This operation is irreversible. Associated records (reports, news articles, etc.) that reference this user ID may be affected depending on database constraints.
+    </Warning>
+
+    ### Path parameters
+
+    <ParamField path="id" type="number" required>
+      The ID of the user to delete.
+    </ParamField>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    ### Response
+
+    ```json
+    { "success": true }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or is not an Administrador. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X DELETE https://your-portal-url/api/users/12 \
+      -H "Authorization: Bearer {token}"
+    ```
+
+  </Tab>
+</Tabs>

@@ -1,0 +1,94 @@
+---
+title: "Submitting and reviewing biweekly reports"
+description: "Coordinators submit biweekly PDF or Excel reports to Google Drive through the VEN 911 portal. HR staff can then review and approve each submission."
+---
+
+Biweekly reports are the operational heartbeat of Portal VEN 911. Coordinators upload a file for each quincena — the first half (days 1–15) or the second half (day 16 through the last day) of every month. Gestión Humana staff then review each submission from a consolidated inbox, approving or rejecting it with an optional comment. The file itself is stored in Google Drive; the portal keeps the metadata and review status in the database.
+
+<Note>
+  Reports are due by the **15th** and the **30th** of each month. The system notice on the dashboard reminds coordinators of this deadline each time they log in.
+</Note>
+
+---
+
+## Submitting a report (Coordinador)
+
+Navigate to **Subir Reportes** in the sidebar at `/dashboard/reportes`. Only users with the **Coordinador** role (or **Administrador**) can access this page.
+
+<Steps>
+  <Step title="Select the year">
+    Choose the reporting year from the dropdown. The portal offers the current year and the previous year.
+  </Step>
+  <Step title="Select the month">
+    Choose the month (Enero through Diciembre) that the report covers.
+  </Step>
+  <Step title="Select the quincena">
+    Click the period button that applies:
+
+    - **1ra Quincena (1–15)** — covers `YYYY-MM-01` to `YYYY-MM-15`
+    - **2da Quincena (16–fin)** — covers `YYYY-MM-16` to the last calendar day of the month (28, 29, 30, or 31, calculated automatically)
+
+    The exact date range is shown below the buttons as a preview so you can confirm the period before uploading.
+  </Step>
+  <Step title="Choose your file">
+    Click **Seleccionar archivo** (or drag a file onto the upload area). Accepted formats:
+
+    - PDF (`.pdf`)
+    - Excel (`.xlsx`, `.xls`)
+    - Word (`.doc`, `.docx`)
+
+    Maximum file size: **10 MB**. Once selected, the file name and size are shown in green.
+  </Step>
+  <Step title="Submit the report">
+    Click **Enviar Reporte**. The button is disabled until a file is selected. While uploading, it shows "Subiendo…".
+
+    - **On success:** A green confirmation message appears: _"Reporte subido correctamente (YYYY-MM-DD → YYYY-MM-DD)"_ with the exact period dates.
+    - **On error:** A red alert appears: _"Error al subir el reporte. Verifica tu conexión y vuelve a intentarlo."_
+  </Step>
+</Steps>
+
+When the upload succeeds, the portal sends the file to the designated Google Drive folder (`GOOGLE_DRIVE_REPORTS_FOLDER_ID`) and saves a record to the database that includes: `department_id`, `user_id`, `period_start`, `period_end`, `quincena`, `file_name`, `file_drive_id`, `file_mime_type`, and `file_size`.
+
+---
+
+## Reviewing reports (Gestión Humana)
+
+Navigate to **Revisión Reportes** in the sidebar at `/dashboard/revision`. Only users with the **Gestión Humana** role (or **Administrador**) can access this page.
+
+The review table shows all submissions from all coordinators, ordered by submission date descending. Each row contains:
+
+| Column | Description |
+|--------|-------------|
+| **Coordinador / Depto** | The submitting coordinator's name and their department |
+| **Período** | The quincena number and year, plus the exact date range |
+| **Archivo** | The file name, with a **Descargar** link to retrieve it from Google Drive |
+| **Fecha Subida** | Date and time of submission in Venezuelan locale |
+| **Estado** | Current review status: **Pendiente**, **Revisado**, or **Rechazado** |
+| **Acciones** | Approve or reject buttons (only shown for Pendiente reports) |
+
+### Approving a report
+
+Click **Aprobar** on a pending report. A confirmation dialog appears: _"¿Confirmar que el reporte ha sido revisado satisfactoriamente?"_ Confirm to mark the report as `reviewed`. The status badge updates to **Revisado** and your name is recorded as the reviewer.
+
+### Rejecting a report
+
+Click **Rechazar** on a pending report. A prompt asks for the reason. Enter a note and confirm — the report is marked `rejected` with your comment stored alongside it. Your name appears in the **Acciones** column as the reviewer once the action is complete.
+
+<Note>
+  Once a report has been approved or rejected, the **Aprobar** and **Rechazar** buttons are hidden. The reviewer's name is shown instead.
+</Note>
+
+---
+
+## Access summary
+
+| Action | Coordinador | Gestión Humana | Administrador |
+|--------|:-----------:|:--------------:|:-------------:|
+| Submit a report | Yes | No | Yes |
+| View own reports | Yes | No | Yes |
+| View all reports | No | Yes | Yes |
+| Approve / reject | No | Yes | Yes |
+
+<Warning>
+  If you need to replace an already-submitted report for a given period, contact your administrator. The portal does not provide a self-service file replacement option once a report has been uploaded.
+</Warning>

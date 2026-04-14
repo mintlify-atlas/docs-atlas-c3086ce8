@@ -1,0 +1,220 @@
+---
+title: 'REST API endpoints for reports'
+description: 'GET, POST /api/reports and PUT /api/reports/[id]/review — submit biweekly reports as multipart form data and review submissions. Requires authentication.'
+---
+
+The reports API lets coordinators submit biweekly (quincena) PDF reports and allows Gestión Humana and Administrador users to review them. Files are uploaded to Google Drive and a metadata record is stored in the database. All endpoints require a valid Bearer token.
+
+<Tabs>
+  <Tab title="GET /api/reports">
+
+    Returns a list of reports. Coordinators see only their own submissions; Gestión Humana and Administrador users see all reports across departments.
+
+    **Required role:** `Coordinador`, `Gestión Humana`, or `Administrador`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    ### Response
+
+    Returns an array of report objects.
+
+    <ResponseField name="id" type="number">
+      Unique report identifier.
+    </ResponseField>
+
+    <ResponseField name="department_id" type="number">
+      ID of the department the report belongs to.
+    </ResponseField>
+
+    <ResponseField name="user_id" type="number">
+      ID of the user who submitted the report.
+    </ResponseField>
+
+    <ResponseField name="period_start" type="string">
+      Start date of the report period (`YYYY-MM-DD`).
+    </ResponseField>
+
+    <ResponseField name="period_end" type="string">
+      End date of the report period (`YYYY-MM-DD`).
+    </ResponseField>
+
+    <ResponseField name="quincena" type="number">
+      Biweekly period number (e.g., `1` or `2`).
+    </ResponseField>
+
+    <ResponseField name="file_name" type="string">
+      Original filename of the uploaded file.
+    </ResponseField>
+
+    <ResponseField name="file_drive_id" type="string">
+      Google Drive file ID for the uploaded report.
+    </ResponseField>
+
+    <ResponseField name="file_mime_type" type="string">
+      MIME type of the uploaded file (e.g., `application/pdf`).
+    </ResponseField>
+
+    <ResponseField name="file_size" type="number">
+      File size in bytes.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      Current review status. One of `pending`, `reviewed`, or `rejected`.
+    </ResponseField>
+
+    <ResponseField name="reviewed_by" type="number">
+      ID of the user who reviewed the report. `null` if not yet reviewed.
+    </ResponseField>
+
+    <ResponseField name="review_comment" type="string">
+      Comment left by the reviewer. `null` if not yet reviewed.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of when the report was submitted.
+    </ResponseField>
+
+    <ResponseField name="user_name" type="string">
+      Display name of the submitting user.
+    </ResponseField>
+
+    <ResponseField name="department_name" type="string">
+      Name of the associated department.
+    </ResponseField>
+
+    <ResponseField name="reviewer_name" type="string">
+      Display name of the reviewer. `null` if not yet reviewed.
+    </ResponseField>
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `401`  | Missing or invalid token. |
+    | `403`  | Role not permitted (e.g., a role other than the three listed). |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl https://your-portal-url/api/reports \
+      -H "Authorization: Bearer {token}"
+    ```
+
+  </Tab>
+  <Tab title="POST /api/reports">
+
+    Submits a new biweekly report. The file is uploaded to Google Drive and a record is created in the database. Only users with the `Coordinador` role can use this endpoint.
+
+    **Required role:** `Coordinador`
+
+    **Content-Type:** `multipart/form-data`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="file" type="file" required>
+      The report file to upload (e.g., a PDF).
+    </ParamField>
+
+    <ParamField body="quincena" type="number" required>
+      Biweekly period number. Parsed as an integer.
+    </ParamField>
+
+    <ParamField body="period_start" type="string" required>
+      Start date of the report period. Format: `YYYY-MM-DD`.
+    </ParamField>
+
+    <ParamField body="period_end" type="string" required>
+      End date of the report period. Format: `YYYY-MM-DD`.
+    </ParamField>
+
+    ### Response
+
+    Returns the created report object (see field descriptions in the GET tab). HTTP status `201`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `400`  | One or more required fields are missing. |
+    | `403`  | User is not authenticated or is not a Coordinador. |
+    | `500`  | Upload to Google Drive failed or database error. |
+
+    ### Example
+
+    ```bash
+    curl -X POST https://your-portal-url/api/reports \
+      -H "Authorization: Bearer {token}" \
+      -F "file=@reporte-enero.pdf" \
+      -F "quincena=1" \
+      -F "period_start=2025-01-01" \
+      -F "period_end=2025-01-15"
+    ```
+
+  </Tab>
+  <Tab title="PUT /api/reports/[id]/review">
+
+    Updates the review status of a report. The reviewer's user ID is recorded automatically from the token.
+
+    **Required role:** `Gestión Humana` or `Administrador`
+
+    ### Path parameters
+
+    <ParamField path="id" type="number" required>
+      The ID of the report to review.
+    </ParamField>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="status" type="string" required>
+      New status for the report. Accepted values: `reviewed`, `rejected`.
+    </ParamField>
+
+    <ParamField body="comment" type="string">
+      Optional reviewer comment. Stored as `review_comment` on the report.
+    </ParamField>
+
+    ### Response
+
+    ```json
+    {
+      "success": true,
+      "report": {
+        "id": 42,
+        "status": "reviewed"
+      }
+    }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `400`  | `status` field is missing from the request body. |
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `404`  | No report found with the given ID. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X PUT https://your-portal-url/api/reports/42/review \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{"status": "reviewed", "comment": "All figures are correct."}'
+    ```
+
+  </Tab>
+</Tabs>

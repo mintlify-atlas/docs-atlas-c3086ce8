@@ -1,0 +1,93 @@
+---
+title: "Dashboard overview and navigation"
+description: "The VEN 911 dashboard is your role-specific command center, showing recent news, system notices, and metrics based on your assigned role in the system."
+---
+
+When you log in to Portal VEN 911, you land at `/dashboard` — a home screen tailored to your role. Every user sees their name and role displayed at the top, a feed of recent news articles, and a system notices panel with reminders relevant to their work. Administrators also see a live metrics summary for the entire system.
+
+## Welcome header
+
+The dashboard greets you by name and displays your assigned role in red:
+
+> **Bienvenido(a), [your name]**
+> Estás accediendo bajo el rol de: **[your role]**
+
+This header appears on every page load and reflects the account your administrator created for you. You cannot change your own role — only an Administrador can update it.
+
+## Recent news feed
+
+The left panel shows the three most recent published news articles, ordered by publication date. Each entry displays the article title, a two-line excerpt of the body text, and the publication date formatted in Venezuelan locale (`dd/mm/yyyy`).
+
+If no articles have been published yet, the panel shows: _"No hay noticias publicadas."_
+
+## System notices
+
+The right panel shows role-specific alerts under the heading **Avisos de Sistema**. Every user sees a reminder that their module access is limited to their assigned role. Two roles also receive a targeted notice:
+
+<Tabs>
+  <Tab title="Coordinador">
+    > ⚠️ Tiene hasta el 15 y el 30 de cada mes para subir los reportes quincenales.
+
+    This reminds coordinators of the biweekly report deadline. Reports not submitted by those dates are considered overdue.
+  </Tab>
+  <Tab title="Gestión Humana">
+    > 🔔 Hay reportes pendientes por revisar en su bandeja.
+
+    This prompts HR staff to check the **Revisión Reportes** module for submitted reports waiting for review or approval.
+  </Tab>
+</Tabs>
+
+## Administrator metrics panel
+
+If your role is **Administrador**, a second panel appears below the system notices. It shows four live counters pulled from the database at login:
+
+| Metric | What it counts |
+|--------|----------------|
+| **Usuarios** | Total registered user accounts |
+| **Reportes** | Total biweekly reports submitted across all coordinators |
+| **Noticias** | Total news articles in the system (including hidden ones) |
+| **Formatos** | Total institutional format documents uploaded |
+
+These counts update each time you reload the dashboard.
+
+## Sidebar navigation
+
+The sidebar is your primary navigation tool. It lists only the modules your role can access — links for other roles are never shown.
+
+<Tabs>
+  <Tab title="Desktop">
+    On desktop (screens 768 px and wider), the sidebar appears as a fixed left panel. Click the red toggle button on its right edge to collapse it to icon-only view or expand it back to full labels. Your preference persists for the session.
+  </Tab>
+  <Tab title="Mobile">
+    On mobile, the sidebar is hidden by default. Tap the menu icon in the top navigation bar to open it as a full-screen overlay. Tap outside the sidebar or the **X** button to close it. Tapping any link also closes the menu automatically.
+  </Tab>
+</Tabs>
+
+## Modules per role
+
+The links available in your sidebar depend entirely on your role:
+
+<CardGroup cols={2}>
+  <Card title="All roles" icon="house">
+    **Inicio** (`/dashboard`) — Dashboard home
+
+    **Noticias** (`/dashboard/noticias`) — News and announcements
+
+    **Formatos** (`/dashboard/formatos`) — Downloadable institutional documents
+  </Card>
+  <Card title="Coordinador only" icon="upload">
+    **Subir Reportes** (`/dashboard/reportes`) — Submit biweekly operational reports to Google Drive
+  </Card>
+  <Card title="Gestión Humana only" icon="square-check">
+    **Revisión Reportes** (`/dashboard/revision`) — Review and approve coordinator report submissions
+  </Card>
+  <Card title="Administrador only" icon="users">
+    **Usuarios** (`/dashboard/usuarios`) — Create and manage user accounts
+
+    **Bitacora** (`/dashboard/bitacora`) — System activity log
+  </Card>
+</CardGroup>
+
+<Note>
+  If you navigate directly to a URL for a module you don't have permission to access, the page displays: _"No tienes permisos para ver esta página."_ No data is exposed.
+</Note>

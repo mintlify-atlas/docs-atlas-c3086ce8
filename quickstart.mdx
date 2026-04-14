@@ -1,80 +1,156 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Get started with Portal VEN 911"
+description: "Learn how to log in to Portal VEN 911, navigate your role-specific dashboard, and complete your first operational task in a few steps."
 ---
 
-## Get started in three steps
+Portal VEN 911 requires an active account before you can log in. Your administrator creates your account, assigns your role, and provides your credentials. You do not self-register. Once you have your institutional email and password, you can be up and running in under five minutes.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before logging in, confirm you have:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+- An active account created by your administrator
+- Your institutional email address (format: `usuario@ven911.gob.ve`)
+- Your initial password (provided by your administrator)
 
-### Step 2: Deploy your changes
+<Note>
+  If you do not know your password or have not received your credentials, contact your system administrator. There is no self-service password reset.
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+## Logging in
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Steps>
+  <Step title="Navigate to the portal">
+    Open any modern browser and go to the Portal VEN 911 URL provided by your organization. You will see the public landing page with a login button.
+  </Step>
+  <Step title="Open the login form">
+    Click the login button or navigate directly to `/login`. You will see the **Portal VEN 911 — Acceso al Sistema** form.
+  </Step>
+  <Step title="Enter your credentials">
+    Type your institutional email in the **Correo Electrónico** field (for example, `jperez@ven911.gob.ve`) and your password in the **Contraseña** field.
+  </Step>
+  <Step title="Click Ingresar">
+    Click the **Ingresar** button. If your credentials are valid and your account is active, you are redirected immediately to `/dashboard`.
+  </Step>
+</Steps>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Warning>
+  The **Ingresar** button is disabled until both fields contain a value. If you see an error message after clicking, double-check for extra spaces in your email or password.
+</Warning>
 
-### Step 3: Go live
+## Your dashboard
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+After logging in, the dashboard greets you by name and displays your current role. Every user sees:
+
+- **Recent news** — A feed of the latest official news articles published on the portal
+- **System notices** — Role-specific alerts, such as upcoming report deadlines for coordinators or pending review reminders for HR staff
+
+Administrators additionally see **System Metrics**: live counts of total users, submitted reports, published news articles, and available formats.
+
+## Sidebar navigation
+
+The sidebar on the left shows only the modules your role can access. Here is what each role sees:
+
+| Module | Coordinador | Prensa | Gestión Humana | Administrador |
+|--------|:-----------:|:------:|:--------------:|:-------------:|
+| **Inicio** (dashboard home) | ✓ | ✓ | ✓ | ✓ |
+| **Noticias** (news) | ✓ | ✓ | ✓ | ✓ |
+| **Formatos** (institutional documents) | ✓ | ✓ | ✓ | ✓ |
+| **Subir Reportes** (upload reports) | ✓ | — | — | — |
+| **Revisión Reportes** (review reports) | — | — | ✓ | — |
+| **Usuarios** (user management) | — | — | — | ✓ |
+| **Bitacora** (activity log) | — | — | — | ✓ |
+
+## Your first task
+
+<Tabs>
+  <Tab title="Coordinador">
+    Your primary responsibility is submitting biweekly operational reports by the 15th and 30th of each month.
+
+    <Steps>
+      <Step title="Go to Subir Reportes">
+        Click **Subir Reportes** in the sidebar. This module is only visible to coordinators.
+      </Step>
+      <Step title="Prepare your report file">
+        Have your report ready as a PDF or Excel file before uploading. Ensure it covers the correct biweekly period.
+      </Step>
+      <Step title="Upload your report">
+        Use the upload form to select your file and submit it. The system saves the report and makes it available to Gestión Humana for review.
+      </Step>
+    </Steps>
+
+    <Tip>
+      The dashboard home displays a reminder about your upcoming report deadline. Check it on login to stay on schedule.
+    </Tip>
+  </Tab>
+  <Tab title="Prensa">
+    Your primary responsibility is publishing official news articles that appear on the public portal.
+
+    <Steps>
+      <Step title="Go to Noticias">
+        Click **Noticias** in the sidebar to open the news management module.
+      </Step>
+      <Step title="Create a new article">
+        Use the new article form to enter a title and body content for your news item.
+      </Step>
+      <Step title="Publish the article">
+        Submit the form to publish. The article appears immediately on the public-facing portal and in the dashboard news feed for all staff.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Gestión Humana">
+    Your primary responsibility is reviewing coordinator reports as they are submitted.
+
+    <Steps>
+      <Step title="Go to Revisión Reportes">
+        Click **Revisión Reportes** in the sidebar. This module shows all submitted reports from all coordinators.
+      </Step>
+      <Step title="Open a pending report">
+        Select a report marked as pending to view its details and the uploaded file.
+      </Step>
+      <Step title="Mark the report as reviewed">
+        Use the review action to mark the report as reviewed. You can also add a comment before confirming.
+      </Step>
+    </Steps>
+
+    <Tip>
+      The dashboard home displays a reminder when there are reports pending your review.
+    </Tip>
+  </Tab>
+  <Tab title="Administrador">
+    Your first task is typically creating accounts for the rest of your team.
+
+    <Steps>
+      <Step title="Go to Usuarios">
+        Click **Usuarios** in the sidebar to open the user management module.
+      </Step>
+      <Step title="Create a new user">
+        Fill in the user's name, institutional email, password, and select their role (Coordinador, Prensa, Gestión Humana, or Administrador).
+      </Step>
+      <Step title="Save the account">
+        Submit the form. The user can now log in with the credentials you set. Share their email and password with them through a secure channel.
+      </Step>
+    </Steps>
+
+    <Note>
+      Administrators see live system metrics on the dashboard home: total user count, report count, news article count, and format count.
+    </Note>
+  </Tab>
+</Tabs>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Roles and permissions" icon="shield-halved" href="/roles-and-permissions">
+    Understand the full access model for each role.
+  </Card>
+  <Card title="Dashboard overview" icon="gauge" href="/features/dashboard">
+    Learn everything your dashboard home shows you.
+  </Card>
+  <Card title="Reports" icon="file-arrow-up" href="/features/reports">
+    Full guide to submitting and reviewing reports.
+  </Card>
+  <Card title="User management" icon="users" href="/features/user-management">
+    How administrators create and manage accounts.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

@@ -1,0 +1,92 @@
+---
+title: "Publishing and managing news articles"
+description: "Prensa and Administrador users publish VEN 911 news articles to the public portal, with title, body text, optional image URL, and a visibility toggle."
+---
+
+The **Noticias** module is where Portal VEN 911's official communications live. Prensa staff and administrators write and publish articles that appear both inside the staff dashboard and on the public-facing landing page. Every authenticated user can read published articles through the dashboard; the public can read visible ones without logging in.
+
+Navigate to **Noticias** in the sidebar at `/dashboard/noticias`.
+
+---
+
+## Who can publish
+
+Only users with the **Prensa** or **Administrador** role see the **Nueva Noticia** button. All other roles can browse and search articles but cannot create or delete them.
+
+The API at `POST /api/news` enforces this restriction — any attempt by a non-Prensa, non-Administrador user returns a `403` error.
+
+---
+
+## Article fields
+
+Each news article has four fields:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Título** | Yes | The article headline, displayed as a heading in both the dashboard and the public landing page |
+| **Contenido** | Yes | The body text of the article. Renders as plain text with line breaks preserved |
+| **URL de Imagen** | No | A direct URL to an image hosted externally (Imgur, Cloudinary, Google Drive public share, or any direct image URL). A preview renders below the field as you type |
+| **Visible** | Yes | Boolean. Controls whether the article appears on the public landing page. Defaults to `true` on creation |
+
+---
+
+## Publishing an article
+
+<Steps>
+  <Step title="Open the form">
+    Click **Nueva Noticia** at the top right of the page. A form panel expands below the header.
+  </Step>
+  <Step title="Enter the title and content">
+    Fill in **Título** (required) and **Contenido** (required). Both fields must have a value before the form allows submission.
+  </Step>
+  <Step title="Add an optional image">
+    Paste a direct image URL into the **URL de Imagen** field. A live preview renders immediately. If the URL is invalid or the image fails to load, a placeholder is shown instead. Click the **X** button next to the field to clear the image.
+  </Step>
+  <Step title="Publish">
+    Click **Publicar**. The button shows "Publicando…" while the request is in flight. On success, the form closes, the article list refreshes, and the new article appears at the top.
+  </Step>
+</Steps>
+
+<Tip>
+  You can use image URLs from Imgur, Flickr, Cloudinary, or any server that returns a direct image file. Google Drive images must be shared publicly and use a direct download link format.
+</Tip>
+
+---
+
+## Visibility and the public landing page
+
+The `visible` field determines whether an article appears to unauthenticated visitors on the public landing page. The landing page shows the three most recent articles where `visible = true`.
+
+<Tabs>
+  <Tab title="Administrador">
+    The API returns **all** articles regardless of visibility status. Hidden articles show an **Oculta** badge (yellow) next to the date so you can identify them at a glance.
+  </Tab>
+  <Tab title="All other roles">
+    The API returns only articles where `visible = true`. Hidden articles are not shown or counted in any view.
+  </Tab>
+</Tabs>
+
+---
+
+## Searching articles
+
+A search bar at the top of the article list filters by title in real time. The filter is case-insensitive and matches any substring of the title. Clearing the search field restores the full list.
+
+---
+
+## Deleting an article
+
+Users with the **Prensa** or **Administrador** role see a red trash icon on each article card. Clicking it sends a `DELETE /api/news/{id}` request and immediately removes the article from the list.
+
+<Warning>
+  Deleting an article is permanent. There is no archive or recycle bin — once deleted, the article cannot be recovered.
+</Warning>
+
+---
+
+## Article metadata
+
+Each article records:
+
+- **author_name** — The name of the user who published it. Displayed at the bottom of the article card as _"Por: [name]"_ when present.
+- **published_at** — The timestamp set automatically at creation. Displayed in Venezuelan locale format (`dd/mm/yyyy`).

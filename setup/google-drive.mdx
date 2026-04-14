@@ -1,0 +1,117 @@
+---
+title: 'Integrating Google Drive for file storage'
+description: 'Portal VEN 911 uses Google Drive to store uploaded reports and institutional formats. Configure a service account or OAuth2 credentials to enable file uploads.'
+---
+
+Portal VEN 911 stores two categories of files in Google Drive: biweekly coordinator reports uploaded by `Coordinador` users, and institutional format documents managed by `Administrador` and `Gestión Humana` users. Each category lands in its own designated Drive folder. Files are referenced in the database by their Drive file ID and are served back to users through the portal's own download endpoint — no direct Drive link is exposed.
+
+## Stored file types
+
+| File type | Drive folder variable | Who uploads |
+| --- | --- | --- |
+| Coordinator biweekly reports | `GOOGLE_DRIVE_REPORTS_FOLDER_ID` | `Coordinador` role |
+| Institutional format documents | `GOOGLE_DRIVE_FORMATS_FOLDER_ID` | `Administrador` / `Gestión Humana` roles |
+
+## Choose an authentication method
+
+The application tries OAuth2 credentials first (`GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REFRESH_TOKEN`). If those are absent, it falls back to the service account credentials (`GOOGLE_CLIENT_EMAIL`, `GOOGLE_PRIVATE_KEY`). Configure exactly one method.
+
+<Tabs>
+  <Tab title="Service account (recommended)">
+    A service account is a non-human Google identity associated with your Google Cloud project. It does not require any user to authorize it and is the right choice for automated production deployments.
+
+    <Steps>
+      <Step title="Create a Google Cloud project">
+        Go to [console.cloud.google.com](https://console.cloud.google.com) and click **New Project**. Give it a name such as `portal911` and click **Create**.
+      </Step>
+      <Step title="Enable the Google Drive API">
+        In the left sidebar go to **APIs & Services → Library**. Search for **Google Drive API** and click **Enable**.
+      </Step>
+      <Step title="Create a service account">
+        Go to **APIs & Services → Credentials** and click **Create Credentials → Service account**. Give the account a name (e.g. `portal911-drive`) and click **Done**. You do not need to grant it any project-level IAM role.
+      </Step>
+      <Step title="Download the JSON key">
+        Click the service account you just created, go to the **Keys** tab, and click **Add Key → Create new key**. Choose **JSON** and click **Create**. A JSON file is downloaded to your computer — keep it secure and do not commit it to version control.
+      </Step>
+      <Step title="Set the environment variables">
+        Open the downloaded JSON file. Copy the values of `client_email` and `private_key` into your environment:
+
+        ```bash .env.local
+        GOOGLE_CLIENT_EMAIL=portal911-drive@your-gcp-project.iam.gserviceaccount.com
+        GOOGLE_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIEo...\n-----END RSA PRIVATE KEY-----\n"
+        ```
+
+        <Warning>
+          The `private_key` field in the JSON file contains literal newline characters. When you store it as an environment variable the newlines must be represented as the two-character escape sequence `\n`, otherwise Google's auth library cannot parse the key. Wrap the entire value in double quotes. In most hosting dashboards (including Vercel) you can paste the raw multi-line value directly into the UI and the platform encodes the newlines automatically — verify this is working if you see `error:09091064:PEM routines` in your server logs.
+        </Warning>
+      </Step>
+      <Step title="Share the Drive folders with the service account">
+        In Google Drive, open each folder you created for reports and formats. Click **Share**, paste the service account's email address (from `GOOGLE_CLIENT_EMAIL`), and grant it **Editor** access. Without this step the application will receive a `403 Forbidden` error when trying to upload files.
+      </Step>
+      <Step title="Set the folder ID variables">
+        Open each shared folder in Google Drive. The folder ID is the last path segment in the URL:
+
+        ```
+        https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUv
+                                                ^^^^^^^^^^^^^^^^^^^^^^^
+        ```
+
+        Add both IDs to your environment:
+
+        ```bash .env.local
+        GOOGLE_DRIVE_REPORTS_FOLDER_ID=1AbCdEfGhIjKlMnOpQrStUv_reports
+        GOOGLE_DRIVE_FORMATS_FOLDER_ID=1AbCdEfGhIjKlMnOpQrStUv_formats
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="OAuth2 (personal account)">
+    OAuth2 credentials are tied to a personal Google account. The application uses the offline access flow with a refresh token, so it can upload files without user interaction after the initial authorization. Use this method for local development or when uploads should land in a personal Drive.
+
+    <Steps>
+      <Step title="Create OAuth2 credentials">
+        In [Google Cloud Console](https://console.cloud.google.com), go to **APIs & Services → Credentials** and click **Create Credentials → OAuth client ID**. Choose **Web application**, give it a name, and click **Create**. Copy the **Client ID** and **Client secret**.
+      </Step>
+      <Step title="Generate a refresh token">
+        Go to the [OAuth2 Playground](https://developers.google.com/oauthplayground). Click the settings gear (top right), check **Use your own OAuth credentials**, and paste your client ID and secret.
+
+        In the scope list, find and select **Google Drive API v3** → `https://www.googleapis.com/auth/drive`. Click **Authorize APIs**, sign in with the Google account that owns the Drive folders, and then click **Exchange authorization code for tokens**. Copy the **Refresh token** from the response.
+      </Step>
+      <Step title="Set the environment variables">
+        ```bash .env.local
+        GOOGLE_OAUTH_CLIENT_ID=123456789-abcdefghijklmnop.apps.googleusercontent.com
+        GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-your-client-secret-here
+        GOOGLE_OAUTH_REFRESH_TOKEN=1//your-refresh-token-here
+        ```
+      </Step>
+      <Step title="Set the folder ID variables">
+        Follow the same folder ID instructions as in the service account method. Share the folders with the Google account you authorized in step 2, then set:
+
+        ```bash .env.local
+        GOOGLE_DRIVE_REPORTS_FOLDER_ID=1AbCdEfGhIjKlMnOpQrStUv_reports
+        GOOGLE_DRIVE_FORMATS_FOLDER_ID=1AbCdEfGhIjKlMnOpQrStUv_formats
+        ```
+      </Step>
+    </Steps>
+
+    <Note>
+      OAuth2 refresh tokens can expire if the user revokes access or if your Google Cloud project is set to **Testing** mode (tokens expire after 7 days in testing mode). Publish your OAuth consent screen or switch to a service account to avoid unexpected upload failures in production.
+    </Note>
+  </Tab>
+</Tabs>
+
+## How file downloads work
+
+Files are served through the portal's own API route at `/api/drive/download?fileId={id}`. The endpoint authenticates with Drive using the configured credentials and streams the file content directly to the browser. Users never see or interact with Google Drive directly — they download files through the portal interface. Sharing the Drive folders publicly is not required.
+
+## Verify the integration
+
+After setting all environment variables and restarting the server, test that uploads work end-to-end:
+
+1. Log in as an `Administrador` or `Gestión Humana` user and upload a format document.
+2. Check that the record in the `formats` table has a `file_drive_id` that does **not** start with `fake-`.
+3. Open the format document in the portal to confirm the download stream works.
+
+<Note>
+  If `file_drive_id` values start with `fake-drive-id-`, Google Drive credentials are either missing or not being read correctly. Double-check that your environment variables are loaded (restart the server after editing `.env.local`) and that the private key newlines are escaped correctly.
+</Note>

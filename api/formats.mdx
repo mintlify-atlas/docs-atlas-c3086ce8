@@ -1,0 +1,238 @@
+---
+title: 'REST API endpoints for formats'
+description: 'GET, POST, PUT, DELETE /api/formats — manage downloadable institutional documents. GET is public; write operations require Administrador or Gestión Humana.'
+---
+
+The formats API manages downloadable institutional documents shown on the VEN 911 landing page. The `GET` endpoint requires no authentication and is used directly by the public landing page. Creating, updating, and deleting records requires the `Administrador` or `Gestión Humana` role.
+
+<Tabs>
+  <Tab title="GET /api/formats">
+
+    Returns all institutional format records ordered alphabetically by name. No authentication required.
+
+    **Required role:** None (public)
+
+    ### Response
+
+    Returns an array of format objects.
+
+    <ResponseField name="id" type="number">
+      Unique format identifier.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Display name of the document.
+    </ResponseField>
+
+    <ResponseField name="description" type="string">
+      Short description of the document's purpose. May be `null`.
+    </ResponseField>
+
+    <ResponseField name="file_name" type="string">
+      Original filename as stored in Google Drive. May be `null` for records created via JSON body.
+    </ResponseField>
+
+    <ResponseField name="file_drive_id" type="string">
+      Google Drive file ID. Pass this to `/api/drive/download?fileId={id}&public=1` to download.
+    </ResponseField>
+
+    <ResponseField name="version" type="number">
+      Document version number. Managed by the database.
+    </ResponseField>
+
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp of the last update.
+    </ResponseField>
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl https://your-portal-url/api/formats
+    ```
+
+  </Tab>
+  <Tab title="POST /api/formats">
+
+    Creates a new format record. Accepts either a file upload (`multipart/form-data`) or a reference to an existing Drive file (`application/json`).
+
+    **Required role:** `Administrador` or `Gestión Humana`
+
+    ### Request — multipart/form-data
+
+    Use this variant to upload a new file directly to Google Drive.
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="file" type="file" required>
+      The document file to upload.
+    </ParamField>
+
+    <ParamField body="name" type="string" required>
+      Display name for the document.
+    </ParamField>
+
+    <ParamField body="description" type="string">
+      Optional description. Stored as `null` if omitted.
+    </ParamField>
+
+    ### Request — application/json
+
+    Use this variant to register a file already in Google Drive.
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="name" type="string" required>
+      Display name for the document.
+    </ParamField>
+
+    <ParamField body="file_drive_id" type="string" required>
+      Existing Google Drive file ID.
+    </ParamField>
+
+    <ParamField body="file_name" type="string">
+      Filename to store as metadata. Optional.
+    </ParamField>
+
+    <ParamField body="description" type="string">
+      Optional description. Stored as `null` if omitted.
+    </ParamField>
+
+    ### Response
+
+    Returns the created format record (see GET response fields). HTTP status `201`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `400`  | Missing required fields (`file` and `name` for multipart; `name` and `file_drive_id` for JSON). |
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `500`  | Upload to Google Drive failed or database error. |
+
+    ### Examples
+
+    ```bash
+    # Upload a file
+    curl -X POST https://your-portal-url/api/formats \
+      -H "Authorization: Bearer {token}" \
+      -F "file=@formulario-vacaciones.pdf" \
+      -F "name=Formulario de Vacaciones" \
+      -F "description=Solicitud de período vacacional"
+
+    # Register an existing Drive file
+    curl -X POST https://your-portal-url/api/formats \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Formulario de Vacaciones",
+        "file_drive_id": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+        "file_name": "formulario-vacaciones.pdf",
+        "description": "Solicitud de período vacacional"
+      }'
+    ```
+
+  </Tab>
+  <Tab title="PUT /api/formats">
+
+    Updates the `name` and `description` of an existing format. The Drive file itself is not modified.
+
+    **Required role:** `Administrador` or `Gestión Humana`
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="id" type="number" required>
+      ID of the format to update.
+    </ParamField>
+
+    <ParamField body="name" type="string" required>
+      Updated display name.
+    </ParamField>
+
+    <ParamField body="description" type="string" required>
+      Updated description.
+    </ParamField>
+
+    ### Response
+
+    Returns the updated format record. HTTP status `200`.
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `500`  | Database error. |
+
+    ### Example
+
+    ```bash
+    curl -X PUT https://your-portal-url/api/formats \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "id": 3,
+        "name": "Formulario de Vacaciones v2",
+        "description": "Versión actualizada del formulario"
+      }'
+    ```
+
+  </Tab>
+  <Tab title="DELETE /api/formats">
+
+    Deletes a format record from the database and removes the associated file from Google Drive.
+
+    **Required role:** `Administrador` or `Gestión Humana`
+
+    <Warning>
+      This permanently deletes the file from Google Drive. The operation cannot be undone.
+    </Warning>
+
+    ### Request
+
+    <ParamField header="Authorization" type="string" required>
+      Bearer token. Example: `Bearer <token>`
+    </ParamField>
+
+    <ParamField body="id" type="number" required>
+      ID of the format to delete.
+    </ParamField>
+
+    ### Response
+
+    ```json
+    { "success": true }
+    ```
+
+    ### Error codes
+
+    | Status | Description |
+    |--------|-------------|
+    | `403`  | User is not authenticated or lacks the required role. |
+    | `404`  | No format found with the given ID. |
+    | `500`  | Database error or Google Drive deletion error. |
+
+    ### Example
+
+    ```bash
+    curl -X DELETE https://your-portal-url/api/formats \
+      -H "Authorization: Bearer {token}" \
+      -H "Content-Type: application/json" \
+      -d '{"id": 3}'
+    ```
+
+  </Tab>
+</Tabs>
